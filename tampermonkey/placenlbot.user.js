@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceNL Bot (Czech Edition)
 // @namespace    https://github.com/PlaceCZ/Bot
-// @version      15
+// @version      16
 // @description  Bot pro r/place, puvodem od NL, predelan pro CZ
 // @author       NoahvdAa, GravelCZ, MartinNemi03
 // @match        https://www.reddit.com/r/place/*
@@ -63,11 +63,11 @@ const COLOR_MAPPINGS = {
 (async function () {
     GM_addStyle(GM_getResourceText('TOASTIFY_CSS'));
     currentOrderCanvas.width = 2000;
-    currentOrderCanvas.height = 1000;
+    currentOrderCanvas.height = 2000;
     currentOrderCanvas.style.display = 'none';
     currentOrderCanvas = document.body.appendChild(currentOrderCanvas);
     currentPlaceCanvas.width = 2000;
-    currentPlaceCanvas.height = 1000;
+    currentPlaceCanvas.height = 2000;
     currentPlaceCanvas.style.display = 'none';
     currentPlaceCanvas = document.body.appendChild(currentPlaceCanvas);
 
@@ -85,7 +85,7 @@ const COLOR_MAPPINGS = {
     attemptPlace();
 
     setInterval(() => {
-        if (socket) socket.send(JSON.stringify({type: 'ping'}));
+        if (socket) socket.send(JSON.stringify({ type: 'ping' }));
     }, 5000);
     setInterval(async () => {
         accessToken = await getAccessToken();
@@ -115,7 +115,7 @@ function connectSocket() {
             duration: 10000
         }).showToast();
         socket.send(JSON.stringify({ type: 'getmap' }));
-        socket.send(JSON.stringify({ type: "brand", brand: "tampermonkeyV15" }));
+        socket.send(JSON.stringify({ type: "brand", brand: "userscriptV16" }));
     };
 
     socket.onmessage = async function (message) {
@@ -160,6 +160,8 @@ async function attemptPlace() {
     try {
         ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas, 0, 0);
         ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1000, 0)
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('2'), currentPlaceCanvas, 0, 1000)
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('3'), currentPlaceCanvas, 1000, 1000)
     } catch (e) {
         console.warn('Chyba při načítání mapy: ', e);
         Toastify({
@@ -170,8 +172,8 @@ async function attemptPlace() {
         return;
     }
 
-    const rgbaOrder = currentOrderCtx.getImageData(0, 0, 2000, 1000).data;
-    const rgbaCanvas = ctx.getImageData(0, 0, 2000, 1000).data;
+    const rgbaOrder = currentOrderCtx.getImageData(0, 0, 2000, 2000).data;
+    const rgbaCanvas = ctx.getImageData(0, 0, 2000, 2000).data;
 
     for (const j of ORDER) {
         for (let l = 0; l < 10; l++) {
@@ -237,7 +239,7 @@ async function attemptPlace() {
 }
 
 function place(x, y, color) {
-    socket.send(JSON.stringify({type: 'placepixel', x, y, color}));
+    socket.send(JSON.stringify({ type: 'placepixel', x, y, color }));
     return fetch('https://gql-realtime-2.reddit.com/query', {
         method: 'POST',
         body: JSON.stringify({
@@ -307,7 +309,7 @@ async function getCurrentImageUrl(id = '0') {
         };
 
         ws.onmessage = (message) => {
-            const {data} = message;
+            const { data } = message;
             const parsed = JSON.parse(data);
 
             if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
