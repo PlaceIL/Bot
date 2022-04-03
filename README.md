@@ -30,8 +30,7 @@ Bot totiž ještě nezohledňuje již probíhající odpočet, takže předpokl�
 
 Headless bota můžete používat bez otevřeného browseru a s více účty naráz. K spuštění tohoto bota je potřeba [NodeJS](https://nodejs.org/en/).  
 Instalační skript pro windows: ```powershell Invoke-WebRequest "https://github.com/PlaceCZ/Bot/blob/master/installers/install.ps1" -OutFile installer.ps1 | powershell ./installer.ps1```.  
-
-Instalační skript pro linux: ```curl https://raw.githubusercontent.com/PlaceCZ/Bot/master/installers/linux.sh | sh```
+Instalační skript pro linux: ```curl https://raw.githubusercontent.com/PlaceCZ/Bot/master/installers/linux.sh | sh```  
 Potom bota zapněte pomocí `node headlessBot.js <token>`.
 
 ## Získání tokenu
@@ -46,3 +45,4 @@ V prohlížeči otevřete nástroje pro vývojáře, přepnete na zalozku síť,
 https://user-images.githubusercontent.com/35738060/161390213-d7f8354c-a97d-4a0f-9442-f33ba84941ba.mp4
 
 Video credit - fuho#7423
+Linux Install Script Credit - Madeline#6969
