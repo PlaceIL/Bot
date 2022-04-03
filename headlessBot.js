@@ -10,7 +10,7 @@ const args = process.argv.slice(2);
 
 let accessTokens;
 
-if (args.length != 1 && !process.env.ACCESS_TOKEN) {
+if (args.length !== 1 && !process.env.ACCESS_TOKEN) {
     console.error("Chybí access token.");
     process.exit(1);
 } else if (args[0] === "autologin") {
@@ -24,7 +24,7 @@ let defaultAccessToken = accessTokens[0];
 if (accessTokens.length > 4)
     console.warn("Více než 4 tokeny na IP adresu není doporučeno.");
 
-let panel = process.env.PANEL || "placecz.martinnemi.me";
+let PANEL = process.env.PANEL || "placecz.martinnemi.me";
 
 let socket;
 let currentOrders;
@@ -105,7 +105,7 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
     }
 
     setInterval(() => {
-        if (socket) socket.send(JSON.stringify({ type: "ping" }));
+        if (socket) socket.send(JSON.stringify({type: "ping"}));
     }, 5000);
 })();
 
@@ -127,10 +127,10 @@ function checkVersion() {
                     if (latestVersion > VERSION) {
                         console.error(
                             "Novější verze dostupná: " +
-                                latestVersion +
-                                " (aktuální: " +
-                                VERSION +
-                                ")\nStáhněte novou verzi z https://github.com/PlaceCZ/Bot"
+                            latestVersion +
+                            " (aktuální: " +
+                            VERSION +
+                            ")\nStáhněte novou verzi z https://github.com/PlaceCZ/Bot"
                         );
                         resolve();
                     } else {
@@ -140,7 +140,7 @@ function checkVersion() {
                 } catch (e) {
                     console.error(
                         "Nepodařilo se získat nejnovější verzi. Budeme pokračovat s verzí " +
-                            VERSION
+                        VERSION
                     );
                     resolve();
                 }
@@ -151,11 +151,11 @@ function checkVersion() {
 function connectSocket() {
     console.log("Připojuji se na PlaceCZ server...");
 
-    socket = new WebSocket("wss://" + panel + "/api/ws");
+    socket = new WebSocket("wss://" + PANEL + "/api/ws");
 
     socket.onopen = function () {
-        console.log("Připojeno na PlaceCZ server! " + "(" + panel + ")");
-        socket.send(JSON.stringify({ type: "getmap" }));
+        console.log("Připojeno na PlaceCZ server! " + "(" + PANEL + ")");
+        socket.send(JSON.stringify({type: "getmap"}));
         socket.send(
             JSON.stringify({
                 type: "brand",
@@ -181,7 +181,7 @@ function connectSocket() {
                     })`
                 );
                 currentOrders = await getMapFromUrl(
-                    `https://` + panel + `/maps/${data.data}`
+                    `https://` + PANEL + `/maps/${data.data}`
                 );
                 const order = [];
                 for (let i = 0; i < 1000 * 2000; i++) {
@@ -273,7 +273,7 @@ async function attemptPlace(accessToken = defaultAccessToken) {
 }
 
 function place(x, y, color, accessToken = defaultAccessToken) {
-    socket.send(JSON.stringify({ type: "placepixel", x, y, color }));
+    socket.send(JSON.stringify({type: "placepixel", x, y, color}));
     console.log("Placing pixel at (" + x + ", " + y + ") with color: " + color);
     return fetch("https://gql-realtime-2.reddit.com/query", {
         method: "POST",
@@ -351,7 +351,7 @@ async function getCurrentImageUrl(index = "0") {
         };
 
         ws.onmessage = (message) => {
-            const { data } = message;
+            const {data} = message;
             const parsed = JSON.parse(data);
 
             if (parsed.type === "connection_error") {
