@@ -124,16 +124,10 @@ function checkVersion() {
                     );
                     console.log(latestVersion);
                     if (latestVersion > VERSION) {
-                        console.error(
-                            "Novější verze dostupná: " +
-                            latestVersion +
-                            " (aktuální: " +
-                            VERSION +
-                            ")\nStáhněte novou verzi z https://github.com/PlaceCZ/Bot"
-                        );
+                        console.error(`Novější verze dostupná: ${latestVersion} (aktuální: ${VERSION})\nStáhněte novou verzi z https://github.com/PlaceCZ/Bot`);
                         resolve();
                     } else {
-                        console.log("PlaceCZ Headless V" + VERSION);
+                        console.log(`PlaceCZ Headless V${VERSION}`);
                         resolve();
                     }
                 } catch (e) {
