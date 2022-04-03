@@ -3,7 +3,7 @@ import fetch from "node-fetch";
 import getPixels from "get-pixels";
 import WebSocket from "ws";
 import process from "process";
-import {login} from "./autoLogin.js";
+import { login } from "./autoLogin.js";
 
 const args = process.argv.slice(2);
 
@@ -104,7 +104,7 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
     }
 
     setInterval(() => {
-        if (socket) socket.send(JSON.stringify({type: "ping"}));
+        if (socket) socket.send(JSON.stringify({ type: "ping" }));
     }, 5000);
 })();
 
@@ -145,7 +145,7 @@ function connectSocket() {
 
     socket.onopen = function () {
         console.log(`Připojeno na PlaceCZ server! (${PANEL})`);
-        socket.send(JSON.stringify({type: "getmap"}));
+        socket.send(JSON.stringify({ type: "getmap" }));
         socket.send(
             JSON.stringify({
                 type: "brand",
@@ -249,7 +249,7 @@ async function attemptPlace(accessToken = defaultAccessToken) {
 }
 
 function place(x, y, color, accessToken = defaultAccessToken) {
-    socket.send(JSON.stringify({type: "placepixel", x, y, color}));
+    socket.send(JSON.stringify({ type: "placepixel", x, y, color }));
     console.log(`Umistuji pixel na (${x}, ${y}) barva: ${color}"`);
     return fetch("https://gql-realtime-2.reddit.com/query", {
         method: "POST",
@@ -327,7 +327,7 @@ async function getCurrentImageUrl(index = "0") {
         };
 
         ws.onmessage = (message) => {
-            const {data} = message;
+            const { data } = message;
             const parsed = JSON.parse(data);
 
             if (parsed.type === "connection_error") {
