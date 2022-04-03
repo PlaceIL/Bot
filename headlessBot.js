@@ -3,8 +3,7 @@ import fetch from "node-fetch";
 import getPixels from "get-pixels";
 import WebSocket from "ws";
 import process from "process";
-import * as fs from "fs";
-import { login } from "./autoLogin.js";
+import {login} from "./autoLogin.js";
 
 const args = process.argv.slice(2);
 
