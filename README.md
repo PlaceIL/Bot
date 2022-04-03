@@ -32,11 +32,11 @@ Potom bota zapněte pomocí `node headlessBot.js <token>`.
 
 ## Autologin
 
-Náš bot podporuje i automatické získávání access tokenu v headless botovi. Nejdřve běžte na https://www.reddit.com/prefs/apps, kde si vytovříte aplikaci.  
+Náš bot podporuje i automatické získávání access tokenu v headless botovi. Nejdřve běžte na https://www.reddit.com/prefs/apps, kde si vytvoříte aplikaci.  
 ![Vytváření Aplikace](https://user-images.githubusercontent.com/35738060/161429743-20f9a57c-c25d-4e1e-b4ab-85b28d3d10ce.png)  
 Po vytvoření aplikace si zkopírujte AppId a AppSecret  
 ![AppID a AppSecret](https://user-images.githubusercontent.com/35738060/161429891-6ca287f5-f6d2-47a8-a60b-bfb82fa221fc.png)  
-V složce vašeho bota vytvořte soubor `logins.txt`, kde napište váš appId, appSecret, Uživatelské Jméno a Heslo v tomhle pořadí rozdělené mezerou  
+Ve složce vašeho bota vytvořte soubor `logins.txt`, kde napište váš appId, appSecret, Uživatelské Jméno a Heslo v tomhle pořadí rozdělené mezerou  
 V mém připadě by to bylo: `Umf1Fxi6uG_1_3rhAxFHvA gIjwgfmgF6ONjvqRvDw0ZfQv7ept-A Wavelink_ MojeHeslo`  
 Potom spustťe bota ve stejné složce jak máte `logins.txt` pomocí komandu `node headlessBot.js autologin`. Bot si sám vezme token.  
 PS: Hodnoty uvedené v guidu nejsou platné 🙂 
