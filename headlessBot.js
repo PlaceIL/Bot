@@ -24,7 +24,7 @@ let defaultAccessToken = accessTokens[0];
 if (accessTokens.length > 4)
     console.warn("Více než 4 tokeny na IP adresu není doporučeno.");
 
-let PANEL = process.env.PANEL || "placecz.martinnemi.me";
+const PANEL = process.env.PANEL || "placecz.martinnemi.me";
 
 let socket;
 let currentOrders;
