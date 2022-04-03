@@ -4,14 +4,21 @@ import getPixels from "get-pixels";
 import WebSocket from "ws";
 import process from "process";
 import * as fs from "fs";
+import { login } from "./autoLogin.js";
 
 const args = process.argv.slice(2);
+
+let accessTokens;
 
 if (args.length != 1 && !process.env.ACCESS_TOKEN) {
     console.error("Chybí access token.");
     process.exit(1);
+} else if (args[0] === "autologin") {
+    accessTokens = await login();
+} else {
+    accessTokens = (process.env.ACCESS_TOKEN || args[0]).split(",");
 }
-let accessTokens = (process.env.ACCESS_TOKEN || args[0]).split(",");
+
 let defaultAccessToken = accessTokens[0];
 
 if (accessTokens.length > 4)
@@ -358,8 +365,7 @@ async function getCurrentImageUrl(index = "0") {
 
             ws.close();
             resolve(
-                parsed.payload.data.subscribe.data.name +
-                    `?noCache=${Date.now() * Math.random()}`
+                parsed.payload.data.subscribe.data.name + `?noCache=${Date.now() * Math.random()}`
             );
         };
 
@@ -398,13 +404,11 @@ function calculateCanvasIndex(x, y) {
 
 function rgbToHex(r, g, b) {
     return (
-        "#" +
-        ((1 << 24) + (r << 16) + (g << 8) + b)
+        "#" + ((1 << 24) + (r << 16) + (g << 8) + b)
             .toString(16)
             .slice(1)
             .toUpperCase()
     );
 }
 
-let rgbaOrderToHex = (i, rgbaOrder) =>
-    rgbToHex(rgbaOrder[i * 4], rgbaOrder[i * 4 + 1], rgbaOrder[i * 4 + 2]);
+let rgbaOrderToHex = (i, rgbaOrder) => rgbToHex(rgbaOrder[i * 4], rgbaOrder[i * 4 + 1], rgbaOrder[i * 4 + 2]);
