@@ -25,12 +25,20 @@ Bot totiž ještě nezohledňuje již probíhající odpočet, takže předpokl�
 
 ## Headless Bot
 
+Headless bota můžete používat bez otevřeného browseru a s více účty naráz. K spuštění tohoto bota je potřeba [NodeJS](https://nodejs.org/en/).
 
+Instalační skript pro windows: 
 
+```
+powershell Invoke-WebRequest "https://raw.githubusercontent.com/PlaceCZ/Bot/master/installers/install.ps1" -OutFile installer.ps1 | powershell ./installer.ps1
+```
 
-Headless bota můžete používat bez otevřeného browseru a s více účty naráz. K spuštění tohoto bota je potřeba [NodeJS](https://nodejs.org/en/).  
-Instalační skript pro windows: ```powershell Invoke-WebRequest "https://github.com/PlaceCZ/Bot/blob/master/installers/installer.ps1" -OutFile installer.ps1 | powershell ./installer.ps1```.  
-Instalační skript pro linux: ```curl https://raw.githubusercontent.com/PlaceCZ/Bot/master/installers/linux.sh | sh```  
+Instalační skript pro linux: 
+
+```
+curl https://raw.githubusercontent.com/PlaceCZ/Bot/master/installers/linux.sh | sh
+```
+
 Potom bota zapněte pomocí `node headlessBot.js <token>`.
 
 ## Získání tokenu
