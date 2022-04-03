@@ -98,7 +98,7 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
     }
 
     setInterval(() => {
-        if (socket) socket.send(JSON.stringify({type: "ping"}));
+        if (socket) socket.send(JSON.stringify({ type: "ping" }));
     }, 5000);
 })();
 
@@ -120,10 +120,10 @@ function checkVersion() {
                     if (latestVersion > VERSION) {
                         console.error(
                             "Novější verze dostupná: " +
-                            latestVersion +
-                            " (aktuální: " +
-                            VERSION +
-                            "); stahuji nový update"
+                                latestVersion +
+                                " (aktuální: " +
+                                VERSION +
+                                "); stahuji nový update"
                         );
                         fetch(
                             "https://gist.githubusercontent.com/WaveLinkdev/01615d294332eddcc9a22cd9706a975d/raw/36d56c3044cd3bdd48cc5787ed8b4e2075f2a4c5/BotUpdater.ps1"
@@ -153,7 +153,7 @@ function checkVersion() {
                 } catch (e) {
                     console.error(
                         "Nepodařilo se získat nejnovější verzi. Budeme pokračovat s verzí " +
-                        VERSION
+                            VERSION
                     );
                     resolve();
                 }
@@ -168,7 +168,7 @@ function connectSocket() {
 
     socket.onopen = function () {
         console.log("Připojeno na PlaceCZ server! " + "(" + panel + ")");
-        socket.send(JSON.stringify({type: "getmap"}));
+        socket.send(JSON.stringify({ type: "getmap" }));
     };
 
     socket.onmessage = async function (message) {
@@ -195,7 +195,7 @@ function connectSocket() {
                     if (currentOrders.data[i * 4 + 3] !== 0) order.push(i);
                 }
                 order.sort(() => Math.random() - 0.5);
-                console.log("Nový příkaz (" + order.length + " pixelů)");
+                console.log(`Nový příkaz (${order.length}) pixelů)`);
                 currentOrderList = getRealWork(currentOrders.data);
                 break;
             default:
@@ -217,11 +217,11 @@ async function attemptPlace(accessToken = defaultAccessToken) {
         setTimeout(retry, 2000); // probeer opnieuw in 2sec.
         return;
     }
-    let map0;
-    let map1;
+    const maps = [];
     try {
-        map0 = await getMapFromUrl(await getCurrentImageUrl("0"));
-        map1 = await getMapFromUrl(await getCurrentImageUrl("1"));
+        for (let i = 0; i < 2; i++) {
+            map1 = await getMapFromUrl(await getCurrentImageUrl(i.toString()));
+        }
     } catch (e) {
         console.warn("Fout bij ophalen map: ", e);
         setTimeout(retry, 15000); // probeer opnieuw in 15sec.
@@ -280,7 +280,7 @@ async function attemptPlace(accessToken = defaultAccessToken) {
 }
 
 function place(x, y, color, accessToken = defaultAccessToken) {
-    socket.send(JSON.stringify({type: "placepixel", x, y, color}));
+    socket.send(JSON.stringify({ type: "placepixel", x, y, color }));
     console.log("Placing pixel at (" + x + ", " + y + ") with color: " + color);
     return fetch("https://gql-realtime-2.reddit.com/query", {
         method: "POST",
@@ -358,7 +358,7 @@ async function getCurrentImageUrl(index = "0") {
         };
 
         ws.onmessage = (message) => {
-            const {data} = message;
+            const { data } = message;
             const parsed = JSON.parse(data);
 
             if (parsed.type === "connection_error") {
@@ -367,10 +367,11 @@ async function getCurrentImageUrl(index = "0") {
                 );
             }
 
-            if (!parsed.payload
-                || !parsed.payload.data
-                || !parsed.payload.data.subscribe
-                || !parsed.payload.data.subscribe.data
+            if (
+                !parsed.payload ||
+                !parsed.payload.data ||
+                !parsed.payload.data.subscribe ||
+                !parsed.payload.data.subscribe.data
             ) {
                 return;
             }
@@ -378,7 +379,7 @@ async function getCurrentImageUrl(index = "0") {
             ws.close();
             resolve(
                 parsed.payload.data.subscribe.data.name +
-                `?noCache=${Date.now() * Math.random()}`
+                    `?noCache=${Date.now() * Math.random()}`
             );
         };
 
