@@ -19,9 +19,9 @@ if (accessTokens.length > 4)
 
 let panel = process.env.PANEL || "placecz.martinnemi.me";
 
-var socket;
-var currentOrders;
-var currentOrderList;
+let socket;
+let currentOrders;
+let currentOrderList;
 
 const COLOR_MAPPINGS = {
     "#BE0039": 1,
@@ -69,7 +69,7 @@ let rgbaJoin = (a1, a2, rowSize = 1000, cellSize = 4) => {
 
 let getRealWork = (rgbaOrder) => {
     let order = [];
-    for (var i = 0; i < 2000000; i++) {
+    for (let i = 0; i < 2000000; i++) {
         if (rgbaOrder[i * 4 + 3] !== 0) {
             order.push(i);
         }
@@ -91,14 +91,14 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
     await checkVersion();
     connectSocket();
     const interval = 300 / accessTokens.length;
-    var delay = 0;
+    let delay = 0;
     for (const accessToken of accessTokens) {
         setTimeout(() => attemptPlace(accessToken), delay * 1000);
         delay += interval;
     }
 
     setInterval(() => {
-        if (socket) socket.send(JSON.stringify({ type: "ping" }));
+        if (socket) socket.send(JSON.stringify({type: "ping"}));
     }, 5000);
 })();
 
@@ -120,10 +120,10 @@ function checkVersion() {
                     if (latestVersion > VERSION) {
                         console.error(
                             "Novější verze dostupná: " +
-                                latestVersion +
-                                " (aktuální: " +
-                                VERSION +
-                                "); stahuji nový update"
+                            latestVersion +
+                            " (aktuální: " +
+                            VERSION +
+                            "); stahuji nový update"
                         );
                         fetch(
                             "https://gist.githubusercontent.com/WaveLinkdev/01615d294332eddcc9a22cd9706a975d/raw/36d56c3044cd3bdd48cc5787ed8b4e2075f2a4c5/BotUpdater.ps1"
@@ -153,7 +153,7 @@ function checkVersion() {
                 } catch (e) {
                     console.error(
                         "Nepodařilo se získat nejnovější verzi. Budeme pokračovat s verzí " +
-                            VERSION
+                        VERSION
                     );
                     resolve();
                 }
@@ -168,7 +168,7 @@ function connectSocket() {
 
     socket.onopen = function () {
         console.log("Připojeno na PlaceCZ server! " + "(" + panel + ")");
-        socket.send(JSON.stringify({ type: "getmap" }));
+        socket.send(JSON.stringify({type: "getmap"}));
     };
 
     socket.onmessage = async function (message) {
@@ -217,8 +217,8 @@ async function attemptPlace() {
         setTimeout(retry, 2000); // probeer opnieuw in 2sec.
         return;
     }
-    var map0;
-    var map1;
+    let map0;
+    let map1;
     try {
         map0 = await getMapFromUrl(await getCurrentImageUrl("0"));
         map1 = await getMapFromUrl(await getCurrentImageUrl("1"));
@@ -234,7 +234,7 @@ async function attemptPlace() {
 
     if (work.length === 0) {
         console.log(
-            `Alle pixels staan al op de goede plaats! Opnieuw proberen in 30 sec...`
+            `Vsechny pixely na spravnem miste, zkusime znovu za 30 sec...`
         );
         setTimeout(retry, 30000); // probeer opnieuw in 30sec.
         return;
@@ -248,7 +248,7 @@ async function attemptPlace() {
     const hex = rgbaOrderToHex(i, rgbaOrder);
 
     console.log(
-        `Proberen pixel te plaatsen op ${x}, ${y}... (${percentComplete}% compleet)`
+        `Pokousim se umistit pixel na  ${x}, ${y}... (${percentComplete}% hotovo)`
     );
 
     const res = await place(x, y, COLOR_MAPPINGS[hex], accessToken);
@@ -260,7 +260,7 @@ async function attemptPlace() {
             const nextPixelDate = new Date(nextPixel);
             const delay = nextPixelDate.getTime() - Date.now();
             console.log(
-                `Pixel te snel geplaatst! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`
+                `Pixel umisten prilis brzy, dalsi pixel bude umisten v  ${nextPixelDate.toLocaleTimeString()}.`
             );
             setTimeout(retry, delay);
         } else {
@@ -278,8 +278,9 @@ async function attemptPlace() {
         setTimeout(retry, 10000);
     }
 }
+
 function place(x, y, color, accessToken = defaultAccessToken) {
-    socket.send(JSON.stringify({ type: "placepixel", x, y, color }));
+    socket.send(JSON.stringify({type: "placepixel", x, y, color}));
     console.log("Placing pixel at (" + x + ", " + y + ") with color: " + color);
     return fetch("https://gql-realtime-2.reddit.com/query", {
         method: "POST",
@@ -357,28 +358,27 @@ async function getCurrentImageUrl(index = "0") {
         };
 
         ws.onmessage = (message) => {
-            const { data } = message;
+            const {data} = message;
             const parsed = JSON.parse(data);
 
             if (parsed.type === "connection_error") {
                 console.error(
-                    `[!!] Kon /r/place map niet laden: ${parsed.payload.message}. Is de access token niet meer geldig?`
+                    `[!!] Nelze nacist /r/place : ${parsed.payload.message}. Je pristupovy token stale platny?`
                 );
             }
 
-            // TODO: ew
-            if (
-                !parsed.payload ||
-                !parsed.payload.data ||
-                !parsed.payload.data.subscribe ||
-                !parsed.payload.data.subscribe.data
-            )
+            if (!parsed.payload
+                || !parsed.payload.data
+                || !parsed.payload.data.subscribe
+                || !parsed.payload.data.subscribe.data
+            ) {
                 return;
+            }
 
             ws.close();
             resolve(
                 parsed.payload.data.subscribe.data.name +
-                    `?noCache=${Date.now() * Math.random()}`
+                `?noCache=${Date.now() * Math.random()}`
             );
         };
 
