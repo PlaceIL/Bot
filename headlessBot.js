@@ -159,7 +159,7 @@ function connectSocket() {
         socket.send(
             JSON.stringify({
                 type: "brand",
-                brand: `headlessV${VERSION_NUMBER}`,
+                brand: `headlessV${VERSION}`,
             })
         );
     };
