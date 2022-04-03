@@ -220,7 +220,7 @@ async function attemptPlace(accessToken = defaultAccessToken) {
     const maps = [];
     try {
         for (let i = 0; i < 2; i++) {
-            map1 = await getMapFromUrl(await getCurrentImageUrl(i.toString()));
+            maps.push(await getMapFromUrl(await getCurrentImageUrl(i.toString())));
         }
     } catch (e) {
         console.warn("Fout bij ophalen map: ", e);
@@ -229,7 +229,7 @@ async function attemptPlace(accessToken = defaultAccessToken) {
     }
 
     const rgbaOrder = currentOrders.data;
-    const rgbaCanvas = rgbaJoin(map0.data, map1.data);
+    const rgbaCanvas = rgbaJoin(maps[0].data, maps[1].data);
     const work = getPendingWork(currentOrderList, rgbaOrder, rgbaCanvas);
 
     if (work.length === 0) {
