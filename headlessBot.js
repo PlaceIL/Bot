@@ -123,29 +123,9 @@ function checkVersion() {
                                 latestVersion +
                                 " (aktuální: " +
                                 VERSION +
-                                "); stahuji nový update"
+                                ")\nStáhněte novou verzi z https://github.com/PlaceCZ/Bot"
                         );
-                        fetch(
-                            "https://gist.githubusercontent.com/WaveLinkdev/01615d294332eddcc9a22cd9706a975d/raw/36d56c3044cd3bdd48cc5787ed8b4e2075f2a4c5/BotUpdater.ps1"
-                        )
-                            .then((data) => data.text())
-                            .then((text) => {
-                                fs.writeFileSync("BotUpdater.ps1", text);
-                                console.log("Update stažen");
-                                console.log("Spouštím PowerShell");
-                                exec(
-                                    "powershell ./BotUpdater.ps1",
-                                    (err, stdout, stderr) => {
-                                        if (err) {
-                                            console.error(err);
-                                            return;
-                                        }
-                                        console.log(stdout);
-                                        console.log(stderr);
-                                        resolve();
-                                    }
-                                );
-                            });
+                        resolve();
                     } else {
                         console.log("PlaceCZ Headless V" + VERSION);
                         resolve();
