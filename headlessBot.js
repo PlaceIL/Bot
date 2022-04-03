@@ -269,7 +269,7 @@ async function attemptPlace(accessToken = defaultAccessToken) {
             const nextPixelDate = new Date(nextPixel);
             const delay = nextPixelDate.getTime() - Date.now();
             console.log(
-                `Pixel geplaatst op ${x}, ${y}! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`
+                `Pixel umisten na ${x}, ${y}! Dalsi pixel bude umisten v ${nextPixelDate.toLocaleTimeString()}.`
             );
             setTimeout(retry, delay);
         }
