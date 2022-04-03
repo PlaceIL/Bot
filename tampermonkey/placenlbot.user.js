@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceNL Bot (Czech Edition)
 // @namespace    https://github.com/PlaceCZ/Bot
-// @version      16
+// @version      17
 // @description  Bot pro r/place, puvodem od NL, predelan pro CZ
 // @author       NoahvdAa, GravelCZ, MartinNemi03
 // @match        https://www.reddit.com/r/place/*
