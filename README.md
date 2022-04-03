@@ -29,13 +29,13 @@ Headless bota můžete používat bez otevřeného browseru a s více účty nar
 
 Instalační skript pro windows: 
 
-```
+```powershell
 powershell Invoke-WebRequest "https://raw.githubusercontent.com/PlaceCZ/Bot/master/installers/install.ps1" -OutFile installer.ps1 | powershell ./installer.ps1
 ```
 
 Instalační skript pro linux: 
 
-```
+```bash
 curl https://raw.githubusercontent.com/PlaceCZ/Bot/master/installers/linux.sh | sh
 ```
 
