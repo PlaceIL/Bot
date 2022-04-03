@@ -190,7 +190,7 @@ function connectSocket() {
                 currentOrders = await getMapFromUrl(
                     `https://` + panel + `/maps/${data.data}`
                 );
-                order = [];
+                const order = [];
                 for (let i = 0; i < 1000 * 2000; i++) {
                     if (currentOrders.data[i * 4 + 3] !== 0) order.push(i);
                 }
@@ -211,7 +211,7 @@ function connectSocket() {
     };
 }
 
-async function attemptPlace() {
+async function attemptPlace(accessToken = defaultAccessToken) {
     let retry = () => attemptPlace(accessToken);
     if (currentOrderList === undefined) {
         setTimeout(retry, 2000); // probeer opnieuw in 2sec.
