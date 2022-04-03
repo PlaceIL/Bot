@@ -1,4 +1,4 @@
-const VERSION = 4;
+const VERSION = 5;
 import fetch from "node-fetch";
 import getPixels from "get-pixels";
 import WebSocket from "ws";
@@ -156,6 +156,12 @@ function connectSocket() {
     socket.onopen = function () {
         console.log("Připojeno na PlaceCZ server! " + "(" + panel + ")");
         socket.send(JSON.stringify({ type: "getmap" }));
+        socket.send(
+            JSON.stringify({
+                type: "brand",
+                brand: `headlessV${VERSION_NUMBER}`,
+            })
+        );
     };
 
     socket.onmessage = async function (message) {

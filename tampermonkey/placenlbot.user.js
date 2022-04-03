@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceNL Bot (Czech Edition)
 // @namespace    https://github.com/PlaceCZ/Bot
-// @version      14
+// @version      15
 // @description  Bot pro r/place, puvodem od NL, predelan pro CZ
 // @author       NoahvdAa, GravelCZ, MartinNemi03
 // @match        https://www.reddit.com/r/place/*
@@ -114,7 +114,8 @@ function connectSocket() {
             text: 'Připojeno na server PlaceCZ',
             duration: 10000
         }).showToast();
-        socket.send(JSON.stringify({type: 'getmap'}));
+        socket.send(JSON.stringify({ type: 'getmap' }));
+        socket.send(JSON.stringify({ type: "brand", brand: "tampermonkeyV15" }));
     };
 
     socket.onmessage = async function (message) {
