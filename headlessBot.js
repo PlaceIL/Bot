@@ -137,10 +137,7 @@ function checkVersion() {
                         resolve();
                     }
                 } catch (e) {
-                    console.error(
-                        "Nepodařilo se získat nejnovější verzi. Budeme pokračovat s verzí " +
-                        VERSION
-                    );
+                    console.error(`Nepodařilo se získat nejnovější verzi. Budeme pokračovat s verzí ${VERSION}`);
                     resolve();
                 }
             });
@@ -150,10 +147,10 @@ function checkVersion() {
 function connectSocket() {
     console.log("Připojuji se na PlaceCZ server...");
 
-    socket = new WebSocket("wss://" + PANEL + "/api/ws");
+    socket = new WebSocket(`wss://${PANEL}/api/ws`);
 
     socket.onopen = function () {
-        console.log("Připojeno na PlaceCZ server! " + "(" + PANEL + ")");
+        console.log(`Připojeno na PlaceCZ server! (${PANEL})`);
         socket.send(JSON.stringify({type: "getmap"}));
         socket.send(
             JSON.stringify({
@@ -174,14 +171,8 @@ function connectSocket() {
         switch (data.type.toLowerCase()) {
             case "map":
                 console.debug("data: %j", data);
-                console.log(
-                    `Nové příkazy načteny (důvod: ${
-                        data.reason ? data.reason : "Připojeno k serveru"
-                    })`
-                );
-                currentOrders = await getMapFromUrl(
-                    `https://` + PANEL + `/maps/${data.data}`
-                );
+                console.log(`Nové příkazy načteny (důvod: ${data.reason ? data.reason : "Připojeno k serveru"})`);
+                currentOrders = await getMapFromUrl(`https://${PANEL}/maps/${data.data}`);
                 const order = [];
                 for (let i = 0; i < 1000 * 2000; i++) {
                     if (currentOrders.data[i * 4 + 3] !== 0) order.push(i);
@@ -215,7 +206,7 @@ async function attemptPlace(accessToken = defaultAccessToken) {
             maps.push(await getMapFromUrl(await getCurrentImageUrl(i.toString())));
         }
     } catch (e) {
-        console.warn("Fout bij ophalen map: ", e);
+        console.warn("Chyba pri nacitani mapy: ", e);
         setTimeout(retry, 15000); // probeer opnieuw in 15sec.
         return;
     }
@@ -225,9 +216,7 @@ async function attemptPlace(accessToken = defaultAccessToken) {
     const work = getPendingWork(currentOrderList, rgbaOrder, rgbaCanvas);
 
     if (work.length === 0) {
-        console.log(
-            `Vsechny pixely na spravnem miste, zkusime znovu za 30 sec...`
-        );
+        console.log("Vsechny pixely na spravnem miste, zkusime znovu za 30 sec...");
         setTimeout(retry, 30000); // probeer opnieuw in 30sec.
         return;
     }
@@ -239,9 +228,7 @@ async function attemptPlace(accessToken = defaultAccessToken) {
     const y = Math.floor(i / 2000);
     const hex = rgbaOrderToHex(i, rgbaOrder);
 
-    console.log(
-        `Pokousim se umistit pixel na  ${x}, ${y}... (${percentComplete}% hotovo)`
-    );
+    console.log(`Pokousim se umistit pixel na  ${x}, ${y}... (${percentComplete}% hotovo)`);
 
     const res = await place(x, y, COLOR_MAPPINGS[hex], accessToken);
     const data = await res.json();
@@ -251,18 +238,14 @@ async function attemptPlace(accessToken = defaultAccessToken) {
             const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
             const nextPixelDate = new Date(nextPixel);
             const delay = nextPixelDate.getTime() - Date.now();
-            console.log(
-                `Pixel umisten prilis brzy, dalsi pixel bude umisten v  ${nextPixelDate.toLocaleTimeString()}.`
-            );
+            console.log(`Pixel umisten prilis brzy, dalsi pixel bude umisten v  ${nextPixelDate.toLocaleTimeString()}.`);
             setTimeout(retry, delay);
         } else {
             const nextPixel =
                 data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
             const nextPixelDate = new Date(nextPixel);
             const delay = nextPixelDate.getTime() - Date.now();
-            console.log(
-                `Pixel umisten na ${x}, ${y}! Dalsi pixel bude umisten v ${nextPixelDate.toLocaleTimeString()}.`
-            );
+            console.log(`Pixel umisten na ${x}, ${y}! Dalsi pixel bude umisten v ${nextPixelDate.toLocaleTimeString()}.`);
             setTimeout(retry, delay);
         }
     } catch (e) {
@@ -273,7 +256,7 @@ async function attemptPlace(accessToken = defaultAccessToken) {
 
 function place(x, y, color, accessToken = defaultAccessToken) {
     socket.send(JSON.stringify({type: "placepixel", x, y, color}));
-    console.log("Placing pixel at (" + x + ", " + y + ") with color: " + color);
+    console.log(`Umistuji pixel na (${x}, ${y}) barva: ${color}"`);
     return fetch("https://gql-realtime-2.reddit.com/query", {
         method: "POST",
         body: JSON.stringify({
@@ -369,9 +352,7 @@ async function getCurrentImageUrl(index = "0") {
             }
 
             ws.close();
-            resolve(
-                parsed.payload.data.subscribe.data.name + `?noCache=${Date.now() * Math.random()}`
-            );
+            resolve(parsed.payload.data.subscribe.data.name + `?noCache=${Date.now() * Math.random()}`);
         };
 
         ws.onerror = reject;
