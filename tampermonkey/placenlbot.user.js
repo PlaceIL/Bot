@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceNL Bot (Czech Edition)
 // @namespace    https://github.com/PlaceCZ/Bot
-// @version      17
+// @version      18
 // @description  Bot pro r/place, puvodem od NL, predelan pro CZ
 // @author       NoahvdAa, GravelCZ, MartinNemi03
 // @match        https://www.reddit.com/r/place/*
@@ -13,6 +13,9 @@
 // @downloadURL  https://github.com/PlaceCZ/Bot/raw/master/tampermonkey/placenlbot.user.js
 // @grant        GM_getResourceText
 // @grant        GM_addStyle
+// @grant        GM.xmlHttpRequest
+// @connect      reddit.com
+// @connect      placecz.martinnemi.me
 // ==/UserScript==
 
 // Sorry voor de rommelige code, haast en clean gaatn iet altijd samen ;)
@@ -330,19 +333,39 @@ async function getCurrentImageUrl(id = '0') {
     });
 }
 
-function getCanvasFromUrl(url, canvas, x = 0, y = 0) {
+function getCanvasFromUrl(url, canvas, x = 0, y = 0, clearCanvas = false) {
     return new Promise((resolve, reject) => {
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-            ctx.drawImage(img, x, y);
-            resolve(ctx);
+        let loadImage = ctx => {
+            GM.xmlHttpRequest({
+                method: "GET",
+                url: url,
+                responseType: 'blob',
+                onload: function(response) {
+                    var urlCreator = window.URL || window.webkitURL;
+                    var imageUrl = urlCreator.createObjectURL(this.response);
+                    var img = new Image();
+                    img.onload = () => {
+                        if (clearCanvas) {
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        }
+                        ctx.drawImage(img, x, y);
+                        resolve(ctx);
+                    };
+                    img.onerror = () => {
+                        Toastify({
+                            text: 'Fout bij ophalen map. Opnieuw proberen in 3 sec...',
+                            duration: 3000
+                        }).showToast();
+                        setTimeout(() => loadImage(ctx), 3000);
+                    };
+                    img.src = imageUrl;
+                }
+            })
         };
-        img.onerror = reject;
-        img.src = url;
+        loadImage(canvas.getContext('2d'));
     });
 }
+
 
 function rgbToHex(r, g, b) {
     return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
