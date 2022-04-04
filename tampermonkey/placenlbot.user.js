@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceNL Bot (Czech Edition)
 // @namespace    https://github.com/PlaceCZ/Bot
-// @version      18
+// @version      19
 // @description  Bot pro r/place, puvodem od NL, predelan pro CZ
 // @author       NoahvdAa, GravelCZ, MartinNemi03
 // @match        https://www.reddit.com/r/place/*
@@ -21,21 +21,20 @@
 // Sorry voor de rommelige code, haast en clean gaatn iet altijd samen ;)
 // Překlad: Omlouváme se za chaotický kód, spěch a čistota nejdou vždy dohromady. ;)
 
-const BACKEND_URL = 'placecz.martinnemi.me'
+const VERSION = 19;
+const BACKEND_URL = 'placecz.martinnemi.me';
 const BACKEND_API_WS_URL = `wss://${BACKEND_URL}/api/ws`;
-const BACKEND_API_MAPS = `https://${BACKEND_URL}/maps`
+const BACKEND_API_MAPS = `https://${BACKEND_URL}/maps`;
 
 let socket;
-let hasOrders = false;
+let order;
 let accessToken;
-let pixelsNum = 1;
+let pixelsPlaced = 0;
 let currentOrderCanvas = document.createElement('canvas');
 let currentOrderCtx = currentOrderCanvas.getContext('2d');
 let currentPlaceCanvas = document.createElement('canvas');
 
-
-const ORDER = Array.from(Array(200_000).keys()).sort(() => Math.random() - 0.5);
-
+const DEFAULT_TOAST_DURATION_MS = 10000;
 const COLOR_MAPPINGS = {
     '#6D001A': 0,
     '#BE0039': 1,
@@ -71,13 +70,40 @@ const COLOR_MAPPINGS = {
     '#FFFFFF': 31
 };
 
+const UA_PREFIXES = [
+    "firefox",
+    "chrome",
+    "edg"
+];
+
+const getRealWork = rgbaOrder => {
+    let order = [];
+    for (var i = 0; i < 2000000; i++) {
+        if (rgbaOrder[(i * 4) + 3] !== 0) {
+            order.push(i);
+        }
+    }
+    return order;
+};
+
+const getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
+    let pendingWork = [];
+    for (const i of work) {
+        if (rgbaOrderToHex(i, rgbaOrder) !== rgbaOrderToHex(i, rgbaCanvas)) {
+            pendingWork.push(i);
+        }
+    }
+    return pendingWork;
+};
 
 (async function () {
     GM_addStyle(GM_getResourceText('TOASTIFY_CSS'));
+
     currentOrderCanvas.width = 2000;
     currentOrderCanvas.height = 2000;
     currentOrderCanvas.style.display = 'none';
     currentOrderCanvas = document.body.appendChild(currentOrderCanvas);
+
     currentPlaceCanvas.width = 2000;
     currentPlaceCanvas.height = 2000;
     currentPlaceCanvas.style.display = 'none';
@@ -85,20 +111,22 @@ const COLOR_MAPPINGS = {
 
     Toastify({
         text: 'Získávám přístupový token...',
-        duration: 10000
+        duration: DEFAULT_TOAST_DURATION_MS
     }).showToast();
     accessToken = await getAccessToken();
     Toastify({
         text: 'Přístupový token obdržen!',
-        duration: 10000
+        duration: DEFAULT_TOAST_DURATION_MS
     }).showToast();
 
     connectSocket();
     attemptPlace();
 
     setInterval(() => {
-        if (socket) socket.send(JSON.stringify({ type: 'ping' }));
+        if (socket && socket.readyState === WebSocket.OPEN) 
+            socket.send(JSON.stringify({ type: 'ping' }));
     }, 5000);
+
     setInterval(async () => {
         accessToken = await getAccessToken();
     }, 30 * 60 * 1000);
@@ -106,28 +134,28 @@ const COLOR_MAPPINGS = {
 
 function connectSocket() {
     Toastify({
-        text: 'Připojuji se na server PlaceCZ',
-        duration: 10000
+        text: 'Připojuji se na server PlaceCZ..',
+        duration: DEFAULT_TOAST_DURATION_MS
     }).showToast();
 
     socket = new WebSocket(BACKEND_API_WS_URL);
 
     const errorTimeout = setTimeout(() => {
         Toastify({
-            text: 'Chyba při pokusu o připojení na PlaceCZ server',
-            duration: 10000
+            text: 'Chyba při pokusu o připojení na server PlaceCZ!',
+            duration: DEFAULT_TOAST_DURATION_MS
         }).showToast();
-        console.error('Chyba při pokusu o připojení na PlaceCZ server')
-    }, 2000)
+        console.error('Chyba při pokusu o připojení na server PlaceCZ!');
+    }, 5000);
 
     socket.onopen = function () {
         clearTimeout(errorTimeout);
         Toastify({
-            text: 'Připojeno na server PlaceCZ',
-            duration: 10000
+            text: 'Připojeno na server PlaceCZ!',
+            duration: DEFAULT_TOAST_DURATION_MS
         }).showToast();
         socket.send(JSON.stringify({ type: 'getmap' }));
-        socket.send(JSON.stringify({ type: "brand", brand: "userscriptV16" }));
+        socket.send(JSON.stringify({ type: "brand", brand: `userscript${getPrefix()}V${VERSION}` }));
     };
 
     socket.onmessage = async function (message) {
@@ -141,11 +169,22 @@ function connectSocket() {
         switch (data.type.toLowerCase()) {
             case 'map':
                 Toastify({
-                    text: `Nové rozkazy připraveny, duvod: ${data.reason ? data.reason : 'Připojeno se na PlaceCZ'})`,
-                    duration: 10000
+                    text: `Nové rozkazy připraveny!${data?.reason ? "\nDůvod: " + data.reason : ""}${data?.uploader ? "\nNahrál: " + data.uploader : ""}`,
+                    duration: DEFAULT_TOAST_DURATION_MS
                 }).showToast();
                 currentOrderCtx = await getCanvasFromUrl(`${BACKEND_API_MAPS}/${data.data}`, currentOrderCanvas);
-                hasOrders = true;
+                order = getRealWork(currentOrderCtx.getImageData(0, 0, 2000, 2000).data);
+                Toastify({
+                    text: `Načtena nová mapa, celkem ${order.length} pixelů!`,
+                    duration: DEFAULT_TOAST_DURATION_MS
+                }).showToast();
+                break;
+            case 'toast':
+                Toastify({
+                    text: `Zpráva ze serveru: ${data.message}`,
+                    duration: data.duration || DEFAULT_TOAST_DURATION_MS,
+                    style: data.style || {}
+                }).showToast();
                 break;
             default:
                 break;
@@ -154,30 +193,32 @@ function connectSocket() {
 
     socket.onclose = function (e) {
         Toastify({
-            text: `Odpojen od PlaceCZ serveru: ${e.reason}`,
-            duration: 10000
+            text: `Odpojen od PlaceCZ serveru${e?.reason ? ": " + e.reason : "."}`,
+            duration: DEFAULT_TOAST_DURATION_MS
         }).showToast();
-        console.error('Socketfout: ', e.reason);
+        console.error('Chyba socketu: ', e.reason);
+
         socket.close();
         setTimeout(connectSocket, 1000);
     };
 }
 
 async function attemptPlace() {
-    if (!hasOrders) {
+    if (!order) {
         setTimeout(attemptPlace, 2000); // try again in 2sec.
         return;
     }
+
     let ctx;
     try {
         ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas, 0, 0);
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1000, 0)
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('2'), currentPlaceCanvas, 0, 1000)
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('3'), currentPlaceCanvas, 1000, 1000)
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1000, 0);
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('2'), currentPlaceCanvas, 0, 1000);
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('3'), currentPlaceCanvas, 1000, 1000);
     } catch (e) {
         console.warn('Chyba při načítání mapy: ', e);
         Toastify({
-            text: 'Chyba při načítání mapy, zkuste znovu za 10 sekund',
+            text: 'Chyba při načítání mapy. Další pokus za 10 sekund...',
             duration: 10000
         }).showToast();
         setTimeout(attemptPlace, 10000);
@@ -186,69 +227,67 @@ async function attemptPlace() {
 
     const rgbaOrder = currentOrderCtx.getImageData(0, 0, 2000, 2000).data;
     const rgbaCanvas = ctx.getImageData(0, 0, 2000, 2000).data;
+    const work = getPendingWork(order, rgbaOrder, rgbaCanvas);
 
-    for (const j of ORDER) {
-        for (let l = 0; l < 10; l++) {
-
-            const i = (j * 10) + l;
-
-            // Ignore empty pixels.
-            if (rgbaOrder[(i * 4) + 3] === 0) continue;
-
-            const hex = rgbToHex(rgbaOrder[(i * 4)], rgbaOrder[(i * 4) + 1], rgbaOrder[(i * 4) + 2]);
-
-            // This pixel is correct.
-            if (hex === rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])) continue;
-
-            const x = i % 2000;
-            const y = Math.floor(i / 2000);
-            Toastify({
-                text: `Pokus o umístění pixelu na ${x}, ${y}...`,
-                duration: 10000
-            }).showToast();
-
-            const res = await place(x, y, COLOR_MAPPINGS[hex]);
-            const data = await res.json();
-            try {
-                if (data.errors) {
-                    const error = data.errors[0];
-                    const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
-                    const nextPixelDate = new Date(nextPixel);
-                    const delay = nextPixelDate.getTime() - Date.now();
-                    Toastify({
-                        text: `Příliš brzo umístěný pixel. Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
-                        duration: delay
-                    }).showToast();
-                    setTimeout(attemptPlace, delay);
-                } else {
-                    const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
-                    const nextPixelDate = new Date(nextPixel);
-                    const delay = nextPixelDate.getTime() - Date.now();
-                    Toastify({
-                        text: `Pixel položen na ${x}, ${y}! Celkový počet pixelů který si položil: ${pixelsNum}! Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
-                        duration: delay
-                    }).showToast();
-                    pixelsNum += 1;
-                    setTimeout(attemptPlace, delay);
-                }
-            } catch (e) {
-                console.warn('Chyba pří analýze', e);
-                Toastify({
-                    text: `Chyba pří analýze: ${e}.`,
-                    duration: 10000
-                }).showToast();
-                setTimeout(attemptPlace, 10000);
-            }
-
-            return;
-        }
+    if (work.length === 0) {
+        Toastify({
+            text: `Všechny pixely jsou již na správném místě! Další pokus za 30 sekund...`,
+            duration: 30000
+        }).showToast();
+        setTimeout(attemptPlace, 30000); // Zkuste to znovu za 30 sekund.
+        return;
     }
 
+    const percentComplete = 100 - Math.ceil(work.length * 100 / order.length);
+    const workRemaining = work.length;
+    const idx = Math.floor(Math.random() * work.length);
+    const i = work[idx];
+    const x = i % 2000;
+    const y = Math.floor(i / 2000);
+    const hex = rgbaOrderToHex(i, rgbaOrder);
+
     Toastify({
-        text: `Všechny pixely jsou již na správném místě! Zkouším to znovu za 30 sekund...`,
-        duration: 30000
+        text: `Pokus o umístění pixelů na ${x}, ${y}...\n${percentComplete}% dokončeno, ${workRemaining} zbývá.`,
+        duration: DEFAULT_TOAST_DURATION_MS
     }).showToast();
-    setTimeout(attemptPlace, 30000); // try again in 30sec.
+
+    const res = await place(x, y, COLOR_MAPPINGS[hex]);
+    const data = await res.json();
+    try {
+        if (data.errors) {
+            const error = data.errors[0];
+            const nextPixel = error.extensions.nextAvailablePixelTs + (3500 + Math.floor(Math.random() * 5000));
+            const nextPixelDate = new Date(nextPixel);
+            const delay = nextPixelDate.getTime() - Date.now();
+            const toastDuration = delay > 0 ? delay : DEFAULT_TOAST_DURATION_MS;
+
+            Toastify({
+                text: `Příliš brzo umístěný pixel.\nDalší pixel bude položen v ${nextPixelDate.toLocaleTimeString('cs-CZ')}.`,
+                duration: toastDuration
+            }).showToast();
+            setTimeout(attemptPlace, delay);
+        } else {
+            const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + (3500 + Math.floor(Math.random() * 10000)); 
+                // Přidejte náhodný čas mezi 0 a 10 s, abyste zabránili detekci a šíření po restartu serveru.
+            const nextPixelDate = new Date(nextPixel);
+            const delay = nextPixelDate.getTime() - Date.now(); 
+            const toastDuration = delay > 0 ? delay : DEFAULT_TOAST_DURATION_MS;
+            pixelsPlaced++;
+
+            Toastify({
+                text: `Pixel položen na ${x}, ${y}!\nPoložených pixelů: ${pixelsPlaced}\nDalší pixel bude položen v ${nextPixelDate.toLocaleTimeString('cs-CZ')}.`,
+                duration: toastDuration
+            }).showToast();
+            setTimeout(attemptPlace, delay);
+        }
+    } catch (e) {
+        console.warn('Chyba při zpracování odpovědi: ', e);
+        Toastify({
+            text: `Chyba při zpracování odpovědi: ${e}.`,
+            duration: DEFAULT_TOAST_DURATION_MS
+        }).showToast();
+        setTimeout(attemptPlace, 10000);
+    }
 }
 
 function place(x, y, color) {
@@ -266,7 +305,7 @@ function place(x, y, color) {
                             'y': y % 1000
                         },
                         'colorIndex': color,
-                        'canvasIndex': (x > 999 ? 1 : 0)
+                        'canvasIndex': getCanvas(x, y)
                     }
                 }
             },
@@ -329,7 +368,7 @@ async function getCurrentImageUrl(id = '0') {
 
             ws.close();
             resolve(parsed.payload.data.subscribe.data.name + `?noCache=${Date.now() * Math.random()}`);
-        }
+        };
 
         ws.onerror = reject;
     });
@@ -355,20 +394,38 @@ function getCanvasFromUrl(url, canvas, x = 0, y = 0, clearCanvas = false) {
                     };
                     img.onerror = () => {
                         Toastify({
-                            text: 'Fout bij ophalen map. Opnieuw proberen in 3 sec...',
+                            text: 'Chyba při načítání mapy. Opakuji pokus za 3 sekundy..',
                             duration: 3000
                         }).showToast();
                         setTimeout(() => loadImage(ctx), 3000);
                     };
                     img.src = imageUrl;
                 }
-            })
+            });
         };
         loadImage(canvas.getContext('2d'));
     });
 }
 
+function getPrefix() {
+    let ua = window.navigator.userAgent.toLowerCase();
+    let prefix = "";
+
+    UA_PREFIXES.forEach(uaPrefix => {
+        if (ua.includes(uaPrefix)) prefix = `-${uaPrefix}-`;
+    });
+
+    return prefix;
+}
+
+function getCanvas(x, y) {
+    if (x <= 999) return y <= 999 ? 0 : 2;
+    else return y <= 999 ? 1 : 3;
+}
 
 function rgbToHex(r, g, b) {
     return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
 }
+
+let rgbaOrderToHex = (i, rgbaOrder) =>
+    rgbToHex(rgbaOrder[i * 4], rgbaOrder[i * 4 + 1], rgbaOrder[i * 4 + 2]);
