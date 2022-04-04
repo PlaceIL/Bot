@@ -66,3 +66,44 @@ https://user-images.githubusercontent.com/35738060/161390213-d7f8354c-a97d-4a0f-
 
 Video credit - fuho#7423
 Linux Install Script Credit - Madeline#6969
+
+## Linux Container
+
+### Build containeru
+Nejdříve ve složce s botem vytvořte logins.txt (Optional).
+
+Následně cd do složky s botem (např: `cd ~/Bot`) a vyvolat build:
+```bash
+podman build --no-cache -t placecz:latest .
+
+```
+### Spuštění containeru
+Pokud jste před build vytvořili logins.txt:
+```bash
+podman run -e TZ=Europe/Prague -d localhost/placecz
+```
+Pomocí tokenu:
+```bash
+podman run -e TZ=Europe/Prague -d localhost/placecz node headlessBot.js <token>
+```
+Pomocí terminálu uvnitř containeru:
+```bash
+podman run -e TZ=Europe/Prague -it localhost/placecz /bin/sh
+node headlessBot.js <token>
+```
+
+### Smazání containeru
+Nejdříve získat CONTAINER ID:
+```bash
+podman ps
+```
+Po získání id (např. 65c54b9f71a9):
+```bash
+podman stop 65c54b9f71a9
+podman rm 65c54b9f71a9
+```
+
+### Konrola logs
+```bash
+podman logs 65c54b9f71a9
+```
