@@ -1,4 +1,4 @@
-from node:latest
+from node:17-alpine
 
 COPY . /placecz
 
