@@ -28,7 +28,7 @@ const BACKEND_API_MAPS = `https://${BACKEND_URL}/maps`
 let socket;
 let hasOrders = false;
 let accessToken;
-var pixelsNum = 0;
+let pixelsNum = 0;
 let currentOrderCanvas = document.createElement('canvas');
 let currentOrderCtx = currentOrderCanvas.getContext('2d');
 let currentPlaceCanvas = document.createElement('canvas');
@@ -228,6 +228,7 @@ async function attemptPlace() {
                         text: `Pixel položen na ${x}, ${y}! Celkový počet pixelů který si položil: ${pixelsNum}! Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
                         duration: delay
                     }).showToast();
+                    pixelsNum += 1;
                     setTimeout(attemptPlace, delay);
                 }
             } catch (e) {
@@ -279,7 +280,6 @@ function place(x, y, color) {
             'Content-Type': 'application/json'
         }
     });
-    pixelsNum++;
 }
 
 async function getAccessToken() {
