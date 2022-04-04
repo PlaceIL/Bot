@@ -225,7 +225,7 @@ async function attemptPlace() {
                     const nextPixelDate = new Date(nextPixel);
                     const delay = nextPixelDate.getTime() - Date.now();
                     Toastify({
-                        text: `Pixel položen na ${x}, ${y}! Celkový počet pixelů který si položil: ${pixelNum}! Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
+                        text: `Pixel položen na ${x}, ${y}! Celkový počet pixelů který si položil: ${pixelsNum}! Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
                         duration: delay
                     }).showToast();
                     setTimeout(attemptPlace, delay);
