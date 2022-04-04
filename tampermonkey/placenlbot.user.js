@@ -28,7 +28,7 @@ const BACKEND_API_MAPS = `https://${BACKEND_URL}/maps`
 let socket;
 let hasOrders = false;
 let accessToken;
-let pixelsNum = 0;
+var pixelsNum = 0;
 let currentOrderCanvas = document.createElement('canvas');
 let currentOrderCtx = currentOrderCanvas.getContext('2d');
 let currentPlaceCanvas = document.createElement('canvas');
