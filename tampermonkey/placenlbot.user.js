@@ -22,7 +22,7 @@
 // Překlad: Omlouváme se za chaotický kód, spěch a čistota nejdou vždy dohromady. ;)
 
 const VERSION = 19;
-const BACKEND_URL = 'placecz.martinnemi.me';
+const BACKEND_URL = 'r-placeczechbot.onrender.com';
 const BACKEND_API_WS_URL = `wss://${BACKEND_URL}/api/ws`;
 const BACKEND_API_MAPS = `https://${BACKEND_URL}/maps`;
 
@@ -78,7 +78,7 @@ const UA_PREFIXES = [
 
 const getRealWork = rgbaOrder => {
     let order = [];
-    for (var i = 0; i < 2000000; i++) {
+    for (var i = 0; i < 1000 * 1000; i++) {
         if (rgbaOrder[(i * 4) + 3] !== 0) {
             order.push(i);
         }
@@ -99,13 +99,13 @@ const getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
 (async function () {
     GM_addStyle(GM_getResourceText('TOASTIFY_CSS'));
 
-    currentOrderCanvas.width = 2000;
-    currentOrderCanvas.height = 2000;
+    currentOrderCanvas.width = 1000;
+    currentOrderCanvas.height = 1000;
     currentOrderCanvas.style.display = 'none';
     currentOrderCanvas = document.body.appendChild(currentOrderCanvas);
 
-    currentPlaceCanvas.width = 2000;
-    currentPlaceCanvas.height = 2000;
+    currentPlaceCanvas.width = 1000;
+    currentPlaceCanvas.height = 1000;
     currentPlaceCanvas.style.display = 'none';
     currentPlaceCanvas = document.body.appendChild(currentPlaceCanvas);
 
@@ -173,7 +173,7 @@ function connectSocket() {
                     duration: DEFAULT_TOAST_DURATION_MS
                 }).showToast();
                 currentOrderCtx = await getCanvasFromUrl(`${BACKEND_API_MAPS}/${data.data}`, currentOrderCanvas);
-                order = getRealWork(currentOrderCtx.getImageData(0, 0, 2000, 2000).data);
+                order = getRealWork(currentOrderCtx.getImageData(0, 0, 1000, 1000).data);
                 Toastify({
                     text: `Načtena nová mapa, celkem ${order.length} pixelů!`,
                     duration: DEFAULT_TOAST_DURATION_MS
@@ -212,9 +212,9 @@ async function attemptPlace() {
     let ctx;
     try {
         ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas, 0, 0);
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1000, 0);
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('2'), currentPlaceCanvas, 0, 1000);
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('3'), currentPlaceCanvas, 1000, 1000);
+        // ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1000, 0); // Expanze 1
+        // ctx = await getCanvasFromUrl(await getCurrentImageUrl('2'), currentPlaceCanvas, 0, 1000); // Expanze 2
+        // ctx = await getCanvasFromUrl(await getCurrentImageUrl('3'), currentPlaceCanvas, 1000, 1000); // Expanze 3
     } catch (e) {
         console.warn('Chyba při načítání mapy: ', e);
         Toastify({
@@ -225,8 +225,8 @@ async function attemptPlace() {
         return;
     }
 
-    const rgbaOrder = currentOrderCtx.getImageData(0, 0, 2000, 2000).data;
-    const rgbaCanvas = ctx.getImageData(0, 0, 2000, 2000).data;
+    const rgbaOrder = currentOrderCtx.getImageData(0, 0, 1000, 1000).data;
+    const rgbaCanvas = ctx.getImageData(0, 0, 1000, 1000).data;
     const work = getPendingWork(order, rgbaOrder, rgbaCanvas);
 
     if (work.length === 0) {
@@ -242,16 +242,16 @@ async function attemptPlace() {
     const workRemaining = work.length;
     const idx = Math.floor(Math.random() * work.length);
     const i = work[idx];
-    const x = i % 2000;
-    const y = Math.floor(i / 2000);
+    const x = i % 1000;
+    const y = Math.floor(i / 1000);
     const hex = rgbaOrderToHex(i, rgbaOrder);
 
     Toastify({
-        text: `Pokus o umístění pixelů na ${x}, ${y}...\n${percentComplete}% dokončeno, ${workRemaining} zbývá.`,
+        text: `Pokus o umístění pixelů na ${x - 500}, ${y - 500}...\n${percentComplete}% dokončeno, ${workRemaining} zbývá.`,
         duration: DEFAULT_TOAST_DURATION_MS
     }).showToast();
 
-    const res = await place(x, y, COLOR_MAPPINGS[hex]);
+    const res = await place(x - 500, y - 500, COLOR_MAPPINGS[hex]);
     const data = await res.json();
     try {
         if (data.errors) {
@@ -275,7 +275,7 @@ async function attemptPlace() {
             pixelsPlaced++;
 
             Toastify({
-                text: `Pixel položen na ${x}, ${y}!\nPoložených pixelů: ${pixelsPlaced}\nDalší pixel bude položen v ${nextPixelDate.toLocaleTimeString('cs-CZ')}.`,
+                text: `Pixel položen na ${x - 500}, ${y - 500}!\nPoložených pixelů: ${pixelsPlaced}\nDalší pixel bude položen v ${nextPixelDate.toLocaleTimeString('cs-CZ')}.`,
                 duration: toastDuration
             }).showToast();
             setTimeout(attemptPlace, delay);
@@ -301,11 +301,11 @@ function place(x, y, color) {
                     'actionName': 'r/replace:set_pixel',
                     'PixelMessageData': {
                         'coordinate': {
-                            'x': x % 1000,
-                            'y': y % 1000
+                            'x': x,
+                            'y': y 
                         },
                         'colorIndex': color,
-                        'canvasIndex': getCanvas(x, y)
+                        // 'canvasIndex': getCanvas(x, y)
                     }
                 }
             },
