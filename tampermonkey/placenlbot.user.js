@@ -3,7 +3,7 @@
 // @namespace    https://github.com/PlaceCZ/Bot
 // @version      19
 // @description  Bot pro r/place, puvodem od NL, predelan pro CZ
-// @author       NoahvdAa, GravelCZ, MartinNemi03
+// @author       NoahvdAa, GravelCZ, MartinNemi03, Wavelink
 // @match        https://www.reddit.com/r/place/*
 // @match        https://new.reddit.com/r/place/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=reddit.com
@@ -15,7 +15,7 @@
 // @grant        GM_addStyle
 // @grant        GM.xmlHttpRequest
 // @connect      reddit.com
-// @connect      placecz.martinnemi.me
+// @connect      r-placeczechbot.onrender.com
 // ==/UserScript==
 
 // Sorry voor de rommelige code, haast en clean gaatn iet altijd samen ;)
@@ -123,7 +123,7 @@ const getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
     attemptPlace();
 
     setInterval(() => {
-        if (socket && socket.readyState === WebSocket.OPEN) 
+        if (socket && socket.readyState === WebSocket.OPEN)
             socket.send(JSON.stringify({ type: 'ping' }));
     }, 5000);
 
@@ -204,6 +204,7 @@ function connectSocket() {
 }
 
 async function attemptPlace() {
+    console.log(order) // -< printuje
     if (!order) {
         setTimeout(attemptPlace, 2000); // try again in 2sec.
         return;
@@ -211,10 +212,12 @@ async function attemptPlace() {
 
     let ctx;
     try {
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas, 0, 0);
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 0, 0);
         // ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1000, 0); // Expanze 1
         // ctx = await getCanvasFromUrl(await getCurrentImageUrl('2'), currentPlaceCanvas, 0, 1000); // Expanze 2
         // ctx = await getCanvasFromUrl(await getCurrentImageUrl('3'), currentPlaceCanvas, 1000, 1000); // Expanze 3
+
+        console.log(ctx) // <- neprintuje
     } catch (e) {
         console.warn('Chyba při načítání mapy: ', e);
         Toastify({
@@ -267,10 +270,10 @@ async function attemptPlace() {
             }).showToast();
             setTimeout(attemptPlace, delay);
         } else {
-            const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + (3500 + Math.floor(Math.random() * 10000)); 
+            const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + (3500 + Math.floor(Math.random() * 10000));
                 // Přidejte náhodný čas mezi 0 a 10 s, abyste zabránili detekci a šíření po restartu serveru.
             const nextPixelDate = new Date(nextPixel);
-            const delay = nextPixelDate.getTime() - Date.now(); 
+            const delay = nextPixelDate.getTime() - Date.now();
             const toastDuration = delay > 0 ? delay : DEFAULT_TOAST_DURATION_MS;
             pixelsPlaced++;
 
@@ -302,7 +305,7 @@ function place(x, y, color) {
                     'PixelMessageData': {
                         'coordinate': {
                             'x': x,
-                            'y': y 
+                            'y': y
                         },
                         'colorIndex': color,
                         // 'canvasIndex': getCanvas(x, y)
@@ -347,7 +350,7 @@ async function getCurrentImageUrl(id = '0') {
                     'variables': {
                         'input': {
                             'channel': {
-                                'teamOwner': 'AFD2022',
+                                'teamOwner': 'GARLICBREAD',
                                 'category': 'CANVAS',
                                 'tag': id
                             }
@@ -364,6 +367,8 @@ async function getCurrentImageUrl(id = '0') {
             const { data } = message;
             const parsed = JSON.parse(data);
 
+            console.log(parsed)
+
             if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
 
             ws.close();
@@ -376,6 +381,7 @@ async function getCurrentImageUrl(id = '0') {
 
 function getCanvasFromUrl(url, canvas, x = 0, y = 0, clearCanvas = false) {
     return new Promise((resolve, reject) => {
+        console.log(url)
         let loadImage = ctx => {
             GM.xmlHttpRequest({
                 method: "GET",
