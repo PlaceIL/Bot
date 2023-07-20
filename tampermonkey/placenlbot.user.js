@@ -270,8 +270,9 @@ async function attemptPlace() {
             }).showToast();
             setTimeout(attemptPlace, delay);
         } else {
+            console.log(data.data)
             const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + (3500 + Math.floor(Math.random() * 10000));
-                // Přidejte náhodný čas mezi 0 a 10 s, abyste zabránili detekci a šíření po restartu serveru.
+            // Přidejte náhodný čas mezi 0 a 10 s, abyste zabránili detekci a šíření po restartu serveru.
             const nextPixelDate = new Date(nextPixel);
             const delay = nextPixelDate.getTime() - Date.now();
             const toastDuration = delay > 0 ? delay : DEFAULT_TOAST_DURATION_MS;
@@ -308,7 +309,7 @@ function place(x, y, color) {
                             'y': y
                         },
                         'colorIndex': color,
-                        // 'canvasIndex': getCanvas(x, y)
+                        'canvasIndex': '1'
                     }
                 }
             },
@@ -433,5 +434,26 @@ function rgbToHex(r, g, b) {
     return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
 }
 
+async function placePixel23(x, y, colorId, canvasIndex = 1) {
+    const payload = `
+    {
+  "operationName": "setPixel",
+  "variables": {
+    "input": {
+      "actionName": "r/replace:set_pixel",
+      "PixelMessageData": {
+        "coordinate": {
+          "x": ${x},
+          "y": ${y}
+        },
+        "colorIndex": ${colorId},
+        "canvasIndex": ${canvasIndex}
+      }
+    }
+  },
+  "query": "mutation setPixel($input: ActInput!) {\n  act(input: $input) {\n    data {\n      ... on BasicMessage {\n        id\n        data {\n          ... on GetUserCooldownResponseMessageData {\n            nextAvailablePixelTimestamp\n            __typename\n          }\n          ... on SetPixelResponseMessageData {\n            timestamp\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n"
+}`
+    }
+
 let rgbaOrderToHex = (i, rgbaOrder) =>
-    rgbToHex(rgbaOrder[i * 4], rgbaOrder[i * 4 + 1], rgbaOrder[i * 4 + 2]);
+rgbToHex(rgbaOrder[i * 4], rgbaOrder[i * 4 + 1], rgbaOrder[i * 4 + 2]);
