@@ -206,6 +206,8 @@ function connectSocket() {
     };
 }
 
+
+
 async function attemptPlace() {
     if (!order) {
         setTimeout(attemptPlace, 2000); // try again in 2sec.
@@ -223,6 +225,14 @@ async function attemptPlace() {
     const rgbaOrder = currentOrderCtx.getImageData(0, 0, 3000, 2000).data;
     const rgbaCanvas = ctx.getImageData(0, 0, 3000, 2000).data;
 
+    var download = function(c){
+        var link = document.createElement('a');
+        link.download = 'filename.png';
+        link.href = c.toDataURL()
+        link.click();
+    }
+
+
     const work = getPendingWork(order, rgbaOrder, rgbaCanvas);
 
     if (work.length === 0) {
@@ -239,14 +249,13 @@ async function attemptPlace() {
     const idx = Math.floor(Math.random() * work.length);
     const i = work[idx];
 
-    console.log(i)
 
     const x = i % 3000;
-    const y = Math.floor(i / 2000);
+    const y = Math.floor(i / 3000);
     const hex = rgbaOrderToHex(i, rgbaOrder);
 
     Toastify({
-        text: `Pokus o umístění pixelů na ${x}, ${y}...\n${percentComplete}% dokončeno, ${workRemaining} zbývá.`,
+        text: `Pokus o umístění pixelů na ${x - 1500}, ${y - 1000}...\n${percentComplete}% dokončeno, ${workRemaining} zbývá.`,
         duration: DEFAULT_TOAST_DURATION_MS
     }).showToast();
 
@@ -274,7 +283,7 @@ async function attemptPlace() {
             pixelsPlaced++;
 
             Toastify({
-                text: `Pixel položen na ${x}, ${y}!\nPoložených pixelů: ${pixelsPlaced}\nDalší pixel bude položen v ${nextPixelDate.toLocaleTimeString('cs-CZ')}.`,
+                text: `Pixel položen na ${x - 1500}, ${y - 1000}!\nPoložených pixelů: ${pixelsPlaced}\nDalší pixel bude položen v ${nextPixelDate.toLocaleTimeString('cs-CZ')}.`,
                 duration: toastDuration
             }).showToast();
             setTimeout(attemptPlace, delay);
@@ -294,11 +303,9 @@ function place(x, y, color) {
 
 
 
-    let canvasIndex = Math.floor(y / 1000) + (x > 1000 ? 3 : 0)
-    console.log(x, y, canvasIndex)
+    let canvasIndex = Math.floor(x / 1000) + (y > 1000 ? 3 : 0)
     x = x % 1000
-    y = y % 1000
-    console.log(x, y)
+    y = (y % 1000)
 
     return fetch('https://gql-realtime-2.reddit.com/query', {
         method: 'POST',
@@ -463,8 +470,6 @@ async function placePixel23(x, y, colorId, canvasIndex = 1) {
             'Content-Type': 'application/json'
         }, body: payload, method: "POST"
     })
-
-    console.log(a)
 }
 
 let rgbaOrderToHex = (i, rgbaOrder) =>
