@@ -2,7 +2,7 @@
 // @name         PlaceNL Bot (Czech Edition)
 // @namespace    https://github.com/PlaceCZ/Bot
 // @version      20
-// @description  Bot pro r/place, puvodem od NL, predelan pro CZ
+// @description  Bot for r/place, origin from NL, rewritten for CZ
 // @author       NoahvdAa, GravelCZ, MartinNemi03, Wavelink
 // @match        https://www.reddit.com/r/place/*
 // @match        https://new.reddit.com/r/place/*
@@ -18,8 +18,7 @@
 // @connect      r-placeczechbot.onrender.com
 // ==/UserScript==
 
-// Sorry voor de rommelige code, haast en clean gaatn iet altijd samen ;)
-// Překlad: Omlouváme se za chaotický kód, spěch a čistota nejdou vždy dohromady. ;)
+// Sorry for chaotic code
 
 const VERSION = 19;
 const BACKEND_URL = 'r-placeczechbot.onrender.com';
@@ -113,12 +112,12 @@ const getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
     window.orderCanvas = currentOrderCanvas
 
     Toastify({
-        text: 'Získávám přístupový token...',
+        text: 'Fetching token...',
         duration: DEFAULT_TOAST_DURATION_MS
     }).showToast();
     accessToken = await getAccessToken();
     Toastify({
-        text: 'Přístupový token obdržen!',
+        text: 'Token fetched!',
         duration: DEFAULT_TOAST_DURATION_MS
     }).showToast();
 
@@ -137,7 +136,7 @@ const getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
 
 function connectSocket() {
     Toastify({
-        text: 'Připojuji se na server PlaceCZ..',
+        text: 'Connecting to PlaceCZ server..',
         duration: DEFAULT_TOAST_DURATION_MS
     }).showToast();
 
@@ -145,16 +144,16 @@ function connectSocket() {
 
     const errorTimeout = setTimeout(() => {
         Toastify({
-            text: 'Chyba při pokusu o připojení na server PlaceCZ!',
+            text: 'Error when connecting to PlaceCZ server!',
             duration: DEFAULT_TOAST_DURATION_MS
         }).showToast();
-        console.error('Chyba při pokusu o připojení na server PlaceCZ!');
+        console.error('Error when connecting to PlaceCZ server!');
     }, 5000);
 
     socket.addEventListener('open', function () {
         clearTimeout(errorTimeout);
         Toastify({
-            text: 'Připojeno na server PlaceCZ!',
+            text: 'Connected to PlaceCZ server!',
             duration: DEFAULT_TOAST_DURATION_MS
         }).showToast();
         socket.send(JSON.stringify({ type: 'getmap' }));
@@ -172,20 +171,20 @@ function connectSocket() {
         switch (data.type.toLowerCase()) {
             case 'map':
                 Toastify({
-                    text: `Nové rozkazy připraveny!${data?.reason ? "\nDůvod: " + data.reason : ""}${data?.uploader ? "\nNahrál: " + data.uploader : ""}`,
+                    text: `New commands ready!${data?.reason ? "\nReason: " + data.reason : ""}${data?.uploader ? "\nUploaded by: " + data.uploader : ""}`,
                     duration: DEFAULT_TOAST_DURATION_MS
                 }).showToast();
                 currentOrderCtx = await getCanvasFromUrl(`${BACKEND_API_MAPS}/${data.data}`, currentOrderCanvas);
                 order = getRealWork(currentOrderCtx.getImageData(0, 0, 3000, 2000).data);
                 Toastify({
-                    text: `Načtena nová mapa, celkem ${order.length} pixelů!`,
+                    text: `New commands loaded, ${order.length} pixels in total!`,
                     duration: DEFAULT_TOAST_DURATION_MS
                 }).showToast();
                 mapEmitter.dispatchEvent(new CustomEvent('map'))
                 break;
             case 'toast':
                 Toastify({
-                    text: `Zpráva ze serveru: ${data.message}`,
+                    text: `Message from server: ${data.message}`,
                     duration: data.duration || DEFAULT_TOAST_DURATION_MS,
                     style: data.style || {}
                 }).showToast();
@@ -197,10 +196,10 @@ function connectSocket() {
 
     socket.onclose = function (e) {
         Toastify({
-            text: `Odpojen od PlaceCZ serveru${e?.reason ? ": " + e.reason : "."}`,
+            text: `Disconnected from PlaceCZ server${e?.reason ? ": " + e.reason : "."}`,
             duration: DEFAULT_TOAST_DURATION_MS
         }).showToast();
-        console.error('Chyba socketu: ', e.reason);
+        console.error('Socket error: ', e.reason);
 
         socket.close();
         setTimeout(connectSocket, 1000);
@@ -221,7 +220,7 @@ async function attemptPlace() {
 
     
 
-    mapEmitter.addEventListener('map', () => console.log("NOva mappa"))
+    mapEmitter.addEventListener('map', () => console.log("New map"))
 
     mapEmitter.addEventListener('map', async () => {
         if (order == undefined || order == null) {
@@ -231,11 +230,11 @@ async function attemptPlace() {
 
         let ctx;
         ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas, 0, 0, 0);
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1, 1000, 0); // Expanze 1
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('2'), currentPlaceCanvas, 2, 2000, 0); // Expanze 2
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('3'), currentPlaceCanvas, 3, 0, 1000); // Expanze 3
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('4'), currentPlaceCanvas, 4, 1000, 1000); // Expanze 3
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('5'), currentPlaceCanvas, 5, 2000, 1000); // Expanze 3
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1, 1000, 0); // Expansion 1
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('2'), currentPlaceCanvas, 2, 2000, 0); // Expansion 2
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('3'), currentPlaceCanvas, 3, 0, 1000); // Expansion 3
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('4'), currentPlaceCanvas, 4, 1000, 1000); // Expansion 3
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('5'), currentPlaceCanvas, 5, 2000, 1000); // Expansion 3
 
         const rgbaOrder = currentOrderCtx.getImageData(0, 0, 3000, 2000).data;
         const rgbaCanvas = ctx.getImageData(0, 0, 3000, 2000).data;
@@ -252,10 +251,10 @@ async function attemptPlace() {
 
         if (work.length === 0) {
             Toastify({
-                text: `Všechny pixely jsou již na správném místě! Další pokus za 30 sekund...`,
+                text: `All pixels are placed correctly! Next try in 30 seconds...`,
                 duration: 30000
             }).showToast();
-            setTimeout(attemptPlace, 30000); // Zkuste to znovu za 30 sekund.
+            setTimeout(attemptPlace, 30000); // Try again in 30 seconds.
             return;
         }
 
@@ -270,7 +269,7 @@ async function attemptPlace() {
         const hex = rgbaOrderToHex(i, rgbaOrder);
 
         Toastify({
-            text: `Pokus o umístění pixelů na ${x - 1500}, ${y - 1000}...\n${percentComplete}% dokončeno, ${workRemaining} zbývá.`,
+            text: `Trying to place pixel on ${x - 1500}, ${y - 1000}...\n${percentComplete}% done, ${workRemaining} remaining.`,
             duration: DEFAULT_TOAST_DURATION_MS
         }).showToast();
 
@@ -285,28 +284,28 @@ async function attemptPlace() {
                 const toastDuration = delay > 0 ? delay : DEFAULT_TOAST_DURATION_MS;
 
                 Toastify({
-                    text: `Příliš brzo umístěný pixel.\nDalší pixel bude položen v ${nextPixelDate.toLocaleTimeString('cs-CZ')}.`,
+                    text: `Pixel placed to soon.\nNext pixel will be placed in ${nextPixelDate.toLocaleTimeString('en-US')}.`,
                     duration: toastDuration
                 }).showToast();
                 setTimeout(attemptPlace, delay);
             } else {
                 const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + (3500 + Math.floor(Math.random() * 10000));
-                // Přidejte náhodný čas mezi 0 a 10 s, abyste zabránili detekci a šíření po restartu serveru.
+                // Adds random delay to avoid detection
                 const nextPixelDate = new Date(nextPixel);
                 const delay = nextPixelDate.getTime() - Date.now();
                 const toastDuration = delay > 0 ? delay : DEFAULT_TOAST_DURATION_MS;
                 pixelsPlaced++;
 
                 Toastify({
-                    text: `Pixel položen na ${x - 1500}, ${y - 1000}!\nPoložených pixelů: ${pixelsPlaced}\nDalší pixel bude položen v ${nextPixelDate.toLocaleTimeString('cs-CZ')}.`,
+                    text: `Pixel placed on ${x - 1500}, ${y - 1000}!\nPlaced pixels: ${pixelsPlaced}\nNext pixel will be placed in ${nextPixelDate.toLocaleTimeString('en-US')}.`,
                     duration: toastDuration
                 }).showToast();
                 setTimeout(attemptPlace, delay);
             }
         } catch (e) {
-            console.warn('Chyba při zpracování odpovědi: ', e);
+            console.warn('Error in prosessing response: ', e);
             Toastify({
-                text: `Chyba při zpracování odpovědi: ${e}.`,
+                text: `Error in prosessing response: ${e}.`,
                 duration: DEFAULT_TOAST_DURATION_MS
             }).showToast();
             setTimeout(attemptPlace, 10000);
