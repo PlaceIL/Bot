@@ -26,6 +26,7 @@ When the bot places a pixel, it may still seem like you can place a pixel even t
 ## Getting token
  
 ### Using Tampermonkey:  
+**Works only if you have 2FA Turned off.**
 Click on [this link](./tampermonkey/print_token.user.js?raw=1), and Tampermonkey should prompt you to install the user script. Click on Install. Now, go back to r/place and refresh the page. After a while, an alert with your TOKEN should appear; copy and save it somewhere.
 ![token_alert](https://user-images.githubusercontent.com/539452/161394556-09c14efe-9f1d-4511-92bc-682100f34043.jpg)
  
