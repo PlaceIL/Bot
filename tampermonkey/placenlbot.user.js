@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceNL Bot (Czech Edition)
 // @namespace    https://github.com/PlaceCZ/Bot
-// @version      19
+// @version      20
 // @description  Bot pro r/place, puvodem od NL, predelan pro CZ
 // @author       NoahvdAa, GravelCZ, MartinNemi03, Wavelink
 // @match        https://www.reddit.com/r/place/*
@@ -151,7 +151,7 @@ function connectSocket() {
         console.error('Chyba při pokusu o připojení na server PlaceCZ!');
     }, 5000);
 
-    socket.onopen = function () {
+    socket.addEventListener('open', function () {
         clearTimeout(errorTimeout);
         Toastify({
             text: 'Připojeno na server PlaceCZ!',
@@ -159,7 +159,7 @@ function connectSocket() {
         }).showToast();
         socket.send(JSON.stringify({ type: 'getmap' }));
         socket.send(JSON.stringify({ type: "brand", brand: `userscript${getPrefix()}V${VERSION}` }));
-    };
+    });
 
     socket.onmessage = async function (message) {
         var data;
@@ -181,6 +181,7 @@ function connectSocket() {
                     text: `Načtena nová mapa, celkem ${order.length} pixelů!`,
                     duration: DEFAULT_TOAST_DURATION_MS
                 }).showToast();
+                mapEmitter.dispatchEvent(new CustomEvent('map'))
                 break;
             case 'toast':
                 Toastify({
@@ -206,96 +207,111 @@ function connectSocket() {
     };
 }
 
+let mapEmitter = new EventTarget();
 
 
 async function attemptPlace() {
-    if (!order) {
-        setTimeout(attemptPlace, 2000); // try again in 2sec.
-        return;
+    order = null
+    if (socket.readyState == 1) {
+        socket.send(JSON.stringify({ type: 'getmap' }));
+    } else {
+        socket.addEventListener('open', attemptPlace, {once: true})
+        return
     }
 
-    let ctx;
-    ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas,0, 0, 0);
-    ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas,1, 1000, 0); // Expanze 1
-    ctx = await getCanvasFromUrl(await getCurrentImageUrl('2'), currentPlaceCanvas,2, 2000, 0); // Expanze 2
-    ctx = await getCanvasFromUrl(await getCurrentImageUrl('3'), currentPlaceCanvas,3, 0, 1000); // Expanze 3
-    ctx = await getCanvasFromUrl(await getCurrentImageUrl('4'), currentPlaceCanvas,4, 1000, 1000); // Expanze 3
-    ctx = await getCanvasFromUrl(await getCurrentImageUrl('5'), currentPlaceCanvas,5, 2000, 1000); // Expanze 3
+    
 
-    const rgbaOrder = currentOrderCtx.getImageData(0, 0, 3000, 2000).data;
-    const rgbaCanvas = ctx.getImageData(0, 0, 3000, 2000).data;
+    mapEmitter.addEventListener('map', () => console.log("NOva mappa"))
 
-    var download = function(c){
-        var link = document.createElement('a');
-        link.download = 'filename.png';
-        link.href = c.toDataURL()
-        link.click();
-    }
-
-
-    const work = getPendingWork(order, rgbaOrder, rgbaCanvas);
-
-    if (work.length === 0) {
-        Toastify({
-            text: `Všechny pixely jsou již na správném místě! Další pokus za 30 sekund...`,
-            duration: 30000
-        }).showToast();
-        setTimeout(attemptPlace, 30000); // Zkuste to znovu za 30 sekund.
-        return;
-    }
-
-    const percentComplete = 100 - Math.ceil(work.length * 100 / order.length);
-    const workRemaining = work.length;
-    const idx = Math.floor(Math.random() * work.length);
-    const i = work[idx];
-
-
-    const x = i % 3000;
-    const y = Math.floor(i / 3000);
-    const hex = rgbaOrderToHex(i, rgbaOrder);
-
-    Toastify({
-        text: `Pokus o umístění pixelů na ${x - 1500}, ${y - 1000}...\n${percentComplete}% dokončeno, ${workRemaining} zbývá.`,
-        duration: DEFAULT_TOAST_DURATION_MS
-    }).showToast();
-
-    const res = await place(x, y, COLOR_MAPPINGS[hex]);
-    const data = await res.json();
-    try {
-        if (data.errors) {
-            const error = data.errors[0];
-            const nextPixel = error.extensions.nextAvailablePixelTs + (3500 + Math.floor(Math.random() * 5000));
-            const nextPixelDate = new Date(nextPixel);
-            const delay = nextPixelDate.getTime() - Date.now();
-            const toastDuration = delay > 0 ? delay : DEFAULT_TOAST_DURATION_MS;
-
-            Toastify({
-                text: `Příliš brzo umístěný pixel.\nDalší pixel bude položen v ${nextPixelDate.toLocaleTimeString('cs-CZ')}.`,
-                duration: toastDuration
-            }).showToast();
-            setTimeout(attemptPlace, delay);
-        } else {
-            const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + (3500 + Math.floor(Math.random() * 10000));
-            // Přidejte náhodný čas mezi 0 a 10 s, abyste zabránili detekci a šíření po restartu serveru.
-            const nextPixelDate = new Date(nextPixel);
-            const delay = nextPixelDate.getTime() - Date.now();
-            const toastDuration = delay > 0 ? delay : DEFAULT_TOAST_DURATION_MS;
-            pixelsPlaced++;
-
-            Toastify({
-                text: `Pixel položen na ${x - 1500}, ${y - 1000}!\nPoložených pixelů: ${pixelsPlaced}\nDalší pixel bude položen v ${nextPixelDate.toLocaleTimeString('cs-CZ')}.`,
-                duration: toastDuration
-            }).showToast();
-            setTimeout(attemptPlace, delay);
+    mapEmitter.addEventListener('map', async () => {
+        if (order == undefined || order == null) {
+            setTimeout(attemptPlace, 2000); // try again in 2sec.
+            return;
         }
-    } catch (e) {
-        console.warn('Chyba při zpracování odpovědi: ', e);
+
+        let ctx;
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas, 0, 0, 0);
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1, 1000, 0); // Expanze 1
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('2'), currentPlaceCanvas, 2, 2000, 0); // Expanze 2
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('3'), currentPlaceCanvas, 3, 0, 1000); // Expanze 3
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('4'), currentPlaceCanvas, 4, 1000, 1000); // Expanze 3
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('5'), currentPlaceCanvas, 5, 2000, 1000); // Expanze 3
+
+        const rgbaOrder = currentOrderCtx.getImageData(0, 0, 3000, 2000).data;
+        const rgbaCanvas = ctx.getImageData(0, 0, 3000, 2000).data;
+
+        var download = function (c) {
+            var link = document.createElement('a');
+            link.download = 'filename.png';
+            link.href = c.toDataURL()
+            link.click();
+        }
+
+
+        const work = getPendingWork(order, rgbaOrder, rgbaCanvas);
+
+        if (work.length === 0) {
+            Toastify({
+                text: `Všechny pixely jsou již na správném místě! Další pokus za 30 sekund...`,
+                duration: 30000
+            }).showToast();
+            setTimeout(attemptPlace, 30000); // Zkuste to znovu za 30 sekund.
+            return;
+        }
+
+        const percentComplete = 100 - Math.ceil(work.length * 100 / order.length);
+        const workRemaining = work.length;
+        const idx = Math.floor(Math.random() * work.length);
+        const i = work[idx];
+
+
+        const x = i % 3000;
+        const y = Math.floor(i / 3000);
+        const hex = rgbaOrderToHex(i, rgbaOrder);
+
         Toastify({
-            text: `Chyba při zpracování odpovědi: ${e}.`,
+            text: `Pokus o umístění pixelů na ${x - 1500}, ${y - 1000}...\n${percentComplete}% dokončeno, ${workRemaining} zbývá.`,
             duration: DEFAULT_TOAST_DURATION_MS
         }).showToast();
-        setTimeout(attemptPlace, 10000);
-    }
+
+        const res = await place(x, y, COLOR_MAPPINGS[hex]);
+        const data = await res.json();
+        try {
+            if (data.errors) {
+                const error = data.errors[0];
+                const nextPixel = error.extensions.nextAvailablePixelTs + (3500 + Math.floor(Math.random() * 5000));
+                const nextPixelDate = new Date(nextPixel);
+                const delay = nextPixelDate.getTime() - Date.now();
+                const toastDuration = delay > 0 ? delay : DEFAULT_TOAST_DURATION_MS;
+
+                Toastify({
+                    text: `Příliš brzo umístěný pixel.\nDalší pixel bude položen v ${nextPixelDate.toLocaleTimeString('cs-CZ')}.`,
+                    duration: toastDuration
+                }).showToast();
+                setTimeout(attemptPlace, delay);
+            } else {
+                const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + (3500 + Math.floor(Math.random() * 10000));
+                // Přidejte náhodný čas mezi 0 a 10 s, abyste zabránili detekci a šíření po restartu serveru.
+                const nextPixelDate = new Date(nextPixel);
+                const delay = nextPixelDate.getTime() - Date.now();
+                const toastDuration = delay > 0 ? delay : DEFAULT_TOAST_DURATION_MS;
+                pixelsPlaced++;
+
+                Toastify({
+                    text: `Pixel položen na ${x - 1500}, ${y - 1000}!\nPoložených pixelů: ${pixelsPlaced}\nDalší pixel bude položen v ${nextPixelDate.toLocaleTimeString('cs-CZ')}.`,
+                    duration: toastDuration
+                }).showToast();
+                setTimeout(attemptPlace, delay);
+            }
+        } catch (e) {
+            console.warn('Chyba při zpracování odpovědi: ', e);
+            Toastify({
+                text: `Chyba při zpracování odpovědi: ${e}.`,
+                duration: DEFAULT_TOAST_DURATION_MS
+            }).showToast();
+            setTimeout(attemptPlace, 10000);
+        }
+    }, { once: true })
 }
 
 function place(x, y, color) {
@@ -473,4 +489,4 @@ async function placePixel23(x, y, colorId, canvasIndex = 1) {
 }
 
 let rgbaOrderToHex = (i, rgbaOrder) =>
-rgbToHex(rgbaOrder[i * 4], rgbaOrder[i * 4 + 1], rgbaOrder[i * 4 + 2]);
+    rgbToHex(rgbaOrder[i * 4], rgbaOrder[i * 4 + 1], rgbaOrder[i * 4 + 2]);
