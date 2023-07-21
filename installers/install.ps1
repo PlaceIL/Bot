@@ -4,4 +4,4 @@ Invoke-WebRequest https://raw.githubusercontent.com/PlaceCZ/Bot/master/headlessB
 Invoke-WebRequest https://raw.githubusercontent.com/PlaceCZ/Bot/master/autoLogin.js -OutFile autoLogin.js
 Invoke-WebRequest https://raw.githubusercontent.com/PlaceCZ/Bot/master/package.json -OutFile package.json
 npm install
-echo "Bot je připraven k použití v složce PlaceCZ"
+echo "Bot is ready to use in directory PlaceCZ"
