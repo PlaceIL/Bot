@@ -69,6 +69,26 @@ const COLOR_MAPPINGS = {
     '#FFFFFF': 31
 };
 
+const COLOR_MAPPINGS_NAMES = {
+    "#FF4500": "orange",
+    "#FFA800": "light orange",
+    "FFD635": "yellow",
+    "#00A368": "green",
+    "#7EED56": "lime",
+    "#2450A4": "dark blue",
+    "#3690EA": "blue",
+    "#51E9F4": "cyan",
+    "#811E9F": "purple",
+    "#B44AC0": "light purple",
+    "#FF99AA": "pink",
+    "#9C6926": "brown",
+    "#000000": "black",
+    "#898D90": "gray",
+    "#D4D7D9": "light gray",
+    "#FFFFFF": "white"
+
+}
+
 const UA_PREFIXES = [
     "firefox",
     "chrome",
@@ -285,7 +305,8 @@ async function attemptPlace() {
 
                 Toastify({
                     text: `Pixel placed to soon.\nNext pixel will be placed in ${nextPixelDate.toLocaleTimeString('en-US')}.`,
-                    duration: toastDuration
+                    duration: toastDuration,
+
                 }).showToast();
                 setTimeout(attemptPlace, delay);
             } else {
@@ -297,7 +318,7 @@ async function attemptPlace() {
                 pixelsPlaced++;
 
                 Toastify({
-                    text: `Pixel placed on ${x - 1500}, ${y - 1000}!\nPlaced pixels: ${pixelsPlaced}\nNext pixel will be placed in ${nextPixelDate.toLocaleTimeString('en-US')}.`,
+                    text: `${COLOR_MAPPINGS_NAMES[hex]} pixel placed on ${x - 1500}, ${y - 1000}!\nPlaced pixels: ${pixelsPlaced}\nNext pixel will be placed in ${nextPixelDate.toLocaleTimeString('en-US')}.`,
                     duration: toastDuration
                 }).showToast();
                 setTimeout(attemptPlace, delay);
