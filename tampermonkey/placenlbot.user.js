@@ -21,7 +21,7 @@
 // Sorry for the messy code, rush and clean don't always go together ;)
 
 const VERSION = 1;
-const BACKEND_URL = 'placeil-command.onrender.com/';
+const BACKEND_URL = 'placeil-command.onrender.com';
 const BACKEND_API_WS_URL = `wss://${BACKEND_URL}/api/ws`;
 const BACKEND_API_MAPS = `https://${BACKEND_URL}/maps`;
 
@@ -199,7 +199,7 @@ function connectSocket() {
             text: `Disconnected from PlaceIL server${e?.reason ? ": " + e.reason : "."}`,
             duration: DEFAULT_TOAST_DURATION_MS
         }).showToast();
-        console.error('Chyba socketu: ', e.reason);
+        console.error('Socket error: ', e.reason);
 
         socket.close();
         setTimeout(connectSocket, 1000);
